@@ -7,7 +7,7 @@ include_dir="$__base_dir/include"
 
 dist_dir="$__base_dir/dist"
 
-skill_builder_dir="$dist_dir/ldraw-skill-builder"
+skill_builder_dir="$dist_dir/ldraw-builder"
 references_dir="$skill_builder_dir/references"
 scripts_dir="$skill_builder_dir/scripts"
 

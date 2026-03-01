@@ -1,0 +1,6 @@
+PyYAML
+click
+numpy
+trimesh
+lark
+

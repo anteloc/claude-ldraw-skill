@@ -50,6 +50,7 @@ fi
 
 mkdir -p "$__base_dir/models"
 mkdir -p $scripts_dir
+mkdir -p $references_dir
 
 # Skill and license files
 cp "$skill_md" "$skill_builder_dir/"
@@ -70,6 +71,16 @@ zip -r "$__base_dir/models.zip" "$__base_dir/models" -j || {
 
 rm -rf "$__base_dir/models"
 
+sqlite-utils query "$scripts_dir/ldraw.db" "select * from vw_part_infos_bboxes ;" --tsv > "$__base_dir/parts-bom.tsv"
+
+zip -j "$__base_dir/parts-bom.zip" "$__base_dir/parts-bom.tsv" || {
+    echo "[ERROR] Failed to create parts-bom zip package"
+    exit 1
+}
+
+rm "$__base_dir/parts-bom.tsv"
+
+
 # Copy required scripts and tools
 cp "$ldraw_parser" "$scripts_dir/"
 cp "$ldraw_math" "$scripts_dir/"
@@ -89,13 +100,15 @@ cp "$requirements_txt" "$scripts_dir/"
 
 # Now, reduce size even more by compressing the models directory and also the database file
 
-# zip including directory: $dist_dir/ldraw-skill-builder -> $dist_dir/ldraw-skill-builder-YYYY-MM-DD-hh-mm-ss.zip
-output_zip="$dist_dir/ldraw-skill-builder-$(date +%F-%H-%M-%S).zip"
+# zip including directory: $dist_dir/ldraw-builder -> $dist_dir/ldraw-builder-YYYY-MM-DD-hh-mm-ss.zip
+output_zip="$dist_dir/ldraw-builder-$(date +%F-%H-%M-%S).zip"
 cd "$dist_dir" || { echo "[ERROR] Could not change directory to $dist_dir"; exit 1; }
 
-zip -r "$output_zip" "ldraw-skill-builder" || {
+zip -r "$output_zip" "ldraw-builder" || {
     echo "[ERROR] Failed to create zip package $output_zip"
     exit 1
 }
+
+
 
 echo "[INFO] Skill distribution package created at: $output_zip"
