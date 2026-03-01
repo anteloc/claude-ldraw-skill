@@ -61,6 +61,8 @@ cp "$ldraw_db" "$scripts_dir/ldraw.db"
 mkdir -p "$__base_dir/models"
 cp -r "$ldraw_models_dir"/* "$__base_dir/models/"
 
+rm "$__base_dir/models.zip"
+
 # Compress the models directory, no parents, to get a smaller zip file and then instruct Claude to download them separately from github
 zip -r "$__base_dir/models.zip" "$__base_dir/models" -j || {
     echo "[ERROR] Failed to create models zip package"

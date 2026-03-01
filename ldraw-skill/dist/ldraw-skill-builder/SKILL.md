@@ -34,7 +34,12 @@ cat references/ANNOTATED_REFERENCE.md
 
 ```bash
 pip install -r scripts/requirements.txt --break-system-packages
-wget https://raw.githubusercontent.com/anteloc/claude-ldraw-skill/refs/heads/master/ldraw-skill/models.zip references/models.zip
+# download models library from github (contains .mpd files for reference)
+cd references/models
+wget https://raw.githubusercontent.com/anteloc/claude-ldraw-skill/refs/heads/master/ldraw-skill/models.zip
+unzip models.zip
+rm models.zip
+cd ../..
 
 ```
 
