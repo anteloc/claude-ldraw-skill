@@ -48,7 +48,7 @@ if [ -d "$scripts_dir" ] || [ -d "$references_dir" ]; then
     fi
 fi
 
-mkdir -p $references_dir/models
+mkdir -p "$__base_dir/models"
 mkdir -p $scripts_dir
 
 # Skill and license files
@@ -58,7 +58,6 @@ cp "$license_txt" "$skill_builder_dir/"
 # Copy LDraw database and models
 cp "$ldraw_db" "$scripts_dir/ldraw.db"
 # models will go on the skills dir, zipped to get a smaller zip file and then instruct Claude to download them separately from github
-mkdir -p "$__base_dir/models"
 cp -r "$ldraw_models_dir"/* "$__base_dir/models/"
 
 rm "$__base_dir/models.zip"

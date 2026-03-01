@@ -132,7 +132,7 @@ Cross-reference with parts used in the reference models from Phase 1.
 
 ### Step 3b: Write the Model
 
-Create `generated-model.mpd` following the grammar in `references/ldraw.lark` and patterns from `references/ANNOTATED_REFERENCE.md`.
+Create `generated-model.mpd` following the grammar in `references/ldraw.lark`.
 
 Key conventions:
 - Use only color codes from the `COLORS` table
@@ -197,11 +197,11 @@ If 5 attempts are exhausted without a valid, low-collision model:
 |---|---|
 | `scripts/ldraw-query-db.py` | Query the LDraw SQLite database |
 | `scripts/ldraw-validator.py` | Validate `.mpd` syntax and part references |
-| `scripts/ldraw-annotate-models.py` | Annotate model with intersection warnings |
+| `scripts/ldraw-annotate-models.py` | Annotate model with parts metainfo and intersection warnings |
 | `scripts/ldraw.db` | SQLite database of parts, models, colors |
 | `references/ldraw.lark` | Lark grammar for LDraw format |
 | `references/ldraw-specs.md` | Full LDraw format specification |
-| `references/ANNOTATED_REFERENCE.md` | Annotated example models |
+| `references/ANNOTATED_REFERENCE.md` | Reference for metatags on annotated models |
 | `references/models/` | Source `.mpd` files for reference models |
 
 ---
