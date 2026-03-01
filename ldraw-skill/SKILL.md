@@ -38,6 +38,7 @@ unzip models.zip
 rm models.zip
 cd ..
 
+# download parts-bom.tsv (contains part alias, descriptions and dimensions)
 wget https://raw.githubusercontent.com/anteloc/claude-ldraw-skill/refs/heads/master/ldraw-skill/parts-bom.zip
 unzip parts-bom.zip
 rm parts-bom.zip

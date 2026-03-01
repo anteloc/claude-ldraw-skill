@@ -36,11 +36,14 @@ cd references/models
 wget https://raw.githubusercontent.com/anteloc/claude-ldraw-skill/refs/heads/master/ldraw-skill/models.zip
 unzip models.zip
 rm models.zip
-cd ../..
+cd ..
+
+wget https://raw.githubusercontent.com/anteloc/claude-ldraw-skill/refs/heads/master/ldraw-skill/parts-bom.zip
+unzip parts-bom.zip
+rm parts-bom.zip
+cd ..
 
 ```
-
-
 
 ### 3. Load allowed values (colors, categories, keywords)
 
@@ -58,7 +61,7 @@ python scripts/ldraw-query-db.py scripts/ldraw.db "SELECT keyword FROM MODEL_AI_
 ### 4. Familiarize with table contents
 
 ```bash
-# Sample models
+# Sample models information
 python scripts/ldraw-query-db.py scripts/ldraw.db "
     SELECT alias, category, description, keywords, num_parts, difficulty, size_kb
     FROM VW_MODEL_INFOS
@@ -116,10 +119,7 @@ Before writing any model code, present a clear proposal to the user:
 Search for relevant parts by description:
 
 ```bash
-python scripts/ldraw-query-db.py scripts/ldraw.db "
-    SELECT alias, description, dim_x, dim_y, dim_z
-    FROM VW_PART_INFOS_BBOXES
-    WHERE description LIKE '%<word>%';"
+cat references/parts-bom.tsv | grep -i "<part-description-keyword>"
 ```
 
 Cross-reference with parts used in the reference models from Phase 1.
@@ -141,7 +141,7 @@ Key conventions:
 python scripts/ldraw-validator.py -g references/ldraw.lark -d scripts/ldraw.db -f generated-model.mpd
 ```
 
-- **On failure:** Read the error messages carefully, fix the offending lines, and repeat from Step 3b. Count this as one attempt.
+- **On failure:** Read the error messages carefully, fix the offending lines, fix them, and repeat from Step 3b. Count this as one attempt.
 - **On success:** Proceed to Step 3d.
 
 ### Step 3d: Annotate
@@ -156,10 +156,10 @@ This produces `generated-model.ann.mpd`.
 
 Open `generated-model.ann.mpd` and look for `⚠️` intersection warnings.
 
-- **Too many warnings:** Adjust part placements to reduce collisions, then repeat from Step 3c (counts as another attempt).
+- **Too many warnings:** Warn the user about structural issues and continue to delivery.
 - **Acceptable intersections:** Proceed to delivery.
 
-**What counts as "too many":** More than a few unavoidable ⚠️ warnings (e.g., purely decorative overlap) is acceptable. Systematic structural intersections throughout the model are not.
+**What counts as "too many":** More than a few unavoidable ⚠️ warnings (e.g., purely decorative overlap).
 
 ---
 
