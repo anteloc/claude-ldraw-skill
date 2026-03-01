@@ -32,7 +32,10 @@ cat references/ANNOTATED_REFERENCE.md
 ```bash
 pip install -r scripts/requirements.txt --break-system-packages
 # download models library from github (contains .mpd files for reference)
-cd references/models
+
+mkdir deps/models
+
+cd deps/models
 wget https://raw.githubusercontent.com/anteloc/claude-ldraw-skill/refs/heads/master/ldraw-skill/models.zip
 unzip models.zip
 rm models.zip
@@ -93,7 +96,7 @@ python scripts/ldraw-query-db.py scripts/ldraw.db "
 Then read the `.mpd` source files of the most relevant results:
 
 ```bash
-cat references/models/<alias>
+cat deps/models/<alias>
 ```
 
 Study the structure: how sub-models are declared, how parts are placed, color choices, coordinate conventions.
@@ -120,7 +123,7 @@ Before writing any model code, present a clear proposal to the user:
 Search for relevant parts by description:
 
 ```bash
-cat references/parts-bom.tsv | grep -i "<part-description-keyword>"
+cat deps/parts-bom.tsv | grep -i "<part-description-keyword>"
 ```
 
 Cross-reference with parts used in the reference models from Phase 1.
@@ -197,7 +200,8 @@ If 5 attempts are exhausted without a valid, low-collision model:
 | `references/ldraw.lark` | Lark grammar for LDraw format |
 | `references/ldraw-specs.md` | Full LDraw format specification |
 | `references/ANNOTATED_REFERENCE.md` | Reference for metatags on annotated models |
-| `references/models/` | Source `.mpd` files for reference models |
+| `deps/models/` | Source `.mpd` files for reference models |
+| `deps/parts-bom.tsv` | Parts catalog BOM for reference |
 
 ---
 
