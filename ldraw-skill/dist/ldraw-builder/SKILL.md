@@ -23,9 +23,6 @@ Before doing anything else, read the core references and set up the environment.
 # Grammar specification
 cat references/ldraw.lark
 
-# LDraw format specifications
-cat references/ldraw-specs.md
-
 # Annotated model examples (critical for understanding structure)
 cat references/ANNOTATED_REFERENCE.md
 ```
@@ -68,10 +65,7 @@ python scripts/ldraw-query-db.py scripts/ldraw.db "
     LIMIT 10;"
 
 # Sample parts with bounding boxes
-python scripts/ldraw-query-db.py scripts/ldraw.db "
-    SELECT alias, name, description, dim_x, dim_y, dim_z
-    FROM VW_PART_INFOS_BBOXES
-    LIMIT 10;"
+cat references/parts-bom.tsv | head -n 10
 ```
 
 ---
