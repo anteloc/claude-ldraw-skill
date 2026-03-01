@@ -1,34 +1,210 @@
 ---
 name: ldraw-builder
-description: Create LDraw models with high design quality. Use this skill when the user asks to build LDraw models. Generates polished LDraw models according to the user's specifications.
-license: Complete terms in LICENSE.txt
+description: Generate LDraw models (.mpd file format) from user specifications. Use when users ask to build, create, or generate LEGO/brick models, LDraw files, .mpd files, or any brick-based 3D model. Models should be structurally sound with minimal impossible intersections and floating parts.
 ---
 
-This skill guides creation of polished LDraw models that avoid generic "AI slop" aesthetics. Implement LDraw .mpd models with exceptional attention to aesthetic details and structure.
+# LDraw Model Builder
 
-The user provides LDraw model requirements: an object, vehicle, building, minifig, etc. to build. They may include context about the purpose, audience, or technical constraints.
+## Overview
 
-## Design Thinking
+This skill generates valid LDraw `.mpd` model files from user descriptions. The workflow involves exploring reference models and parts, proposing a build plan, iteratively generating and validating the model, and delivering a clean annotated file.
 
-- **Constraints**: Technical requirements are: pieces assembly should be formally correct, i.e. as least pieces intersecting, and as least pieces floating.
-- **Output**: The output is a .mpd file that can be rendered in LDraw viewers. The model should be visually appealing, structurally sound, and creatively designed. 
+**Maximum attempts:** 5 validation/fix cycles before reporting failure.
 
-**CRITICAL**: Choose a clear conceptual direction and execute it with precision. 
+---
+
+## Phase 0: Preliminaries (Run Once Per Session)
+
+Before doing anything else, read the core references and set up the environment.
+
+### 1. Read the references
+
+```bash
+# Grammar specification
+cat references/ldraw.lark
+
+# LDraw format specifications
+cat references/ldraw-specs.md
+
+# Annotated model examples (critical for understanding structure)
+cat references/ANNOTATED_REFERENCE.md
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r scripts/requirements.txt --break-system-packages
+wget https://raw.githubusercontent.com/anteloc/claude-ldraw-skill/refs/heads/master/ldraw-skill/models.zip references/models.zip
+
+```
 
 
-## Frontend Aesthetics Guidelines
 
-Focus on:
-- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+### 3. Load allowed values (colors, categories, keywords)
 
-NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+```bash
+# All valid color codes
+python scripts/ldraw-query-db.py scripts/ldraw.db "SELECT code, color FROM COLORS;"
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+# All valid model categories
+python scripts/ldraw-query-db.py scripts/ldraw.db "SELECT category FROM MODEL_AI_CATS_UNIQ;"
 
-**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
+# All valid model keywords
+python scripts/ldraw-query-db.py scripts/ldraw.db "SELECT keyword FROM MODEL_AI_KWS_UNIQ;"
+```
 
-Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+### 4. Familiarize with table contents
+
+```bash
+# Sample models
+python scripts/ldraw-query-db.py scripts/ldraw.db "
+    SELECT alias, category, description, keywords, num_parts, difficulty, size_kb
+    FROM VW_MODEL_INFOS
+    LIMIT 10;"
+
+# Sample parts with bounding boxes
+python scripts/ldraw-query-db.py scripts/ldraw.db "
+    SELECT alias, name, description, dim_x, dim_y, dim_z
+    FROM VW_PART_INFOS_BBOXES
+    LIMIT 10;"
+```
+
+---
+
+## Phase 1: Research Similar Models
+
+Search for models related to what the user wants to build. Use allowed categories and keywords only.
+
+```bash
+python scripts/ldraw-query-db.py scripts/ldraw.db "
+    SELECT alias, category, description, keywords, num_parts, difficulty, size_kb
+    FROM VW_MODEL_INFOS
+    WHERE category = '<allowed-category>'
+    AND (
+        description LIKE '%<keyword>%'
+        OR keywords LIKE '%<keyword>%'
+    )
+    LIMIT 10;"
+```
+
+Then read the `.mpd` source files of the most relevant results:
+
+```bash
+cat references/models/<alias>
+```
+
+Study the structure: how sub-models are declared, how parts are placed, color choices, coordinate conventions.
+
+---
+
+## Phase 2: Proposal & User Confirmation
+
+Before writing any model code, present a clear proposal to the user:
+
+- **What you'll build:** brief description of the model
+- **Key parts:** which bricks/pieces you plan to use
+- **Approximate complexity:** simple (few pieces), medium, or complex (many pieces)
+- **Color scheme:** which color codes you'll use
+
+**Wait for user confirmation or feedback before proceeding.**
+
+---
+
+## Phase 3: Iterative Model Generation (Max 5 Attempts)
+
+### Step 3a: Select Parts
+
+Search for relevant parts by description:
+
+```bash
+python scripts/ldraw-query-db.py scripts/ldraw.db "
+    SELECT alias, description, dim_x, dim_y, dim_z
+    FROM VW_PART_INFOS_BBOXES
+    WHERE description LIKE '%<word>%';"
+```
+
+Cross-reference with parts used in the reference models from Phase 1.
+
+### Step 3b: Write the Model
+
+Create `generated-model.mpd` following the grammar in `references/ldraw.lark` and patterns from `references/ANNOTATED_REFERENCE.md`.
+
+Key conventions:
+- Use only color codes from the `COLORS` table
+- Position parts using valid LDraw transformation matrices
+- Declare sub-models before referencing them
+- Avoid floating parts — ensure structural connections
+- Avoid impossible intersections — check bounding box dimensions (dim_x, dim_y, dim_z) when placing adjacent parts
+
+### Step 3c: Validate
+
+```bash
+python scripts/ldraw-validator.py -g references/ldraw.lark -d scripts/ldraw.db -f generated-model.mpd
+```
+
+- **On failure:** Read the error messages carefully, fix the offending lines, and repeat from Step 3b. Count this as one attempt.
+- **On success:** Proceed to Step 3d.
+
+### Step 3d: Annotate
+
+```bash
+python scripts/ldraw-annotate-models.py -g references/ldraw.lark --db scripts/ldraw.db -f generated-model.mpd -o .
+```
+
+This produces `generated-model.ann.mpd`.
+
+### Step 3e: Inspect Intersections
+
+Open `generated-model.ann.mpd` and look for `⚠️` intersection warnings.
+
+- **Too many warnings:** Adjust part placements to reduce collisions, then repeat from Step 3c (counts as another attempt).
+- **Acceptable intersections:** Proceed to delivery.
+
+**What counts as "too many":** More than a few unavoidable ⚠️ warnings (e.g., purely decorative overlap) is acceptable. Systematic structural intersections throughout the model are not.
+
+---
+
+## Phase 4: Delivery
+
+Once the model is valid and intersections are minimized:
+
+1. Present `generated-model.ann.mpd` for download.
+2. Briefly summarize:
+   - Total parts used
+   - Any notable design decisions
+   - Remaining (unavoidable) intersection warnings, if any
+
+---
+
+## Failure Handling
+
+If 5 attempts are exhausted without a valid, low-collision model:
+
+- Report what went wrong
+- Show the last validation error or intersection summary
+- Suggest simplifications the user could approve (fewer parts, simpler geometry, different sub-model breakdown)
+
+---
+
+## Quick Reference
+
+| Script | Purpose |
+|---|---|
+| `scripts/ldraw-query-db.py` | Query the LDraw SQLite database |
+| `scripts/ldraw-validator.py` | Validate `.mpd` syntax and part references |
+| `scripts/ldraw-annotate-models.py` | Annotate model with intersection warnings |
+| `scripts/ldraw.db` | SQLite database of parts, models, colors |
+| `references/ldraw.lark` | Lark grammar for LDraw format |
+| `references/ldraw-specs.md` | Full LDraw format specification |
+| `references/ANNOTATED_REFERENCE.md` | Annotated example models |
+| `references/models/` | Source `.mpd` files for reference models |
+
+---
+
+## Tips for Quality Models
+
+- **Study reference models thoroughly** — real LDraw models reveal correct coordinate scales and connection patterns
+- **Use bounding box dimensions** to calculate exact part placement and avoid intersections
+- **Build bottom-up** — place the base/ground-level parts first, then stack upward
+- **Group logically** — use sub-model files (within the `.mpd`) for repeated assemblies like wheels, windows, legs
+- **Prefer common parts** — standard bricks, plates, and tiles are more likely to exist in the DB and connect cleanly
